@@ -1,0 +1,44 @@
+version: "2"
+networks:
+  working:
+    external: true
+services:
+  caser-proxy:
+    image: nginx
+    volumes:
+      - ./caser-proxy/etc/nginx/conf.d/:/etc/nginx/conf.d
+    ports:
+      - 80:80
+      - 443:443
+    depends_on:
+      - caser-api
+      - caser-app
+    networks:
+      - working
+  caser-mongo:
+    image: mongo
+    volumes:
+      - ./data/mongo:/data/db
+    networks:
+      - working
+  caser-api:
+    build: ./caser-api
+    volumes:
+      - ./caser-api:/work
+    depends_on:
+      - caser-mongo
+    working_dir: /work
+    command: python -u run.py
+    networks:
+      - working
+  caser-app:
+    build: ./caser-app
+    volumes:
+      - ./caser-app:/work
+      - ../common:/common
+    depends_on:
+      - caser-api
+    working_dir: /work
+    command: node run.js
+    networks:
+      - working
